@@ -1,0 +1,36 @@
+version: "3.9"
+
+services:
+  model:
+    container_name: vllm
+    build:
+      context: ./model
+      dockerfile: Dockerfile
+    command: bash vllm-cpu.sh
+    network_mode: "host"
+
+  server:
+    container_name: backend
+    build: ./server
+    ports:
+      - "9000:9000"
+    depends_on:
+      - model
+    networks:
+      - appnet
+
+  web:
+    container_name: frontend
+    build: ./web
+    ports:
+      - "8501:8501"
+    depends_on:
+      - server
+    environment:
+      - BACKEND_URL=http://server:9000
+    networks:
+      - appnet
+
+networks:
+  appnet:
+    driver: bridge
